@@ -113,6 +113,24 @@ const CoreApp: Omit<NextAppComponentType, 'origGetInitialProps'> = ({
     loadLocaleData(currentLocale).then(setMessages);
   }, [currentLocale]);
 
+  const requestsCount = async () => {
+    const response = await axios.get('/api/v1/request/count');
+
+    return response.data;
+  };
+
+  useEffect(() => {
+    if (
+      'setAppBadge' in navigator &&
+      !router.pathname.match(/(login|setup|resetpassword)/)
+    ) {
+      //Set navigator to new variable with any type to prevent setAppBadge unknown error
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const newNavigator: any = navigator;
+      requestsCount().then((data) => newNavigator.setAppBadge(data.pending));
+    }
+  }, [router.pathname]);
+
   if (router.pathname.match(/(login|setup|resetpassword)/)) {
     component = <Component {...pageProps} />;
   } else {

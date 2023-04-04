@@ -19,6 +19,7 @@ interface PushNotificationPayload {
   actionUrl?: string;
   actionUrlTitle?: string;
   requestId?: number;
+  pendingRequestsCount?: number;
 }
 
 class WebPushAgent
@@ -129,6 +130,7 @@ class WebPushAgent
       requestId: payload.request?.id,
       actionUrl,
       actionUrlTitle,
+      pendingRequestsCount: payload.pendingRequestsCount,
     };
   }
 
@@ -169,7 +171,11 @@ class WebPushAgent
       pushSubs.push(...notifySubs);
     }
 
-    if (payload.notifyAdmin) {
+    if (
+      type === Notification.MEDIA_APPROVED ||
+      type === Notification.MEDIA_DECLINED ||
+      payload.notifyAdmin
+    ) {
       const users = await userRepository.find();
 
       const manageUsers = users.filter(

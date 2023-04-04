@@ -1095,6 +1095,18 @@ export class MediaRequest {
   private async sendNotification(media: Media, type: Notification) {
     const tmdb = new TheMovieDb();
 
+    const requestRepository = getRepository(MediaRequest);
+
+    const pendingRequests = await requestRepository.find({
+      where: { status: MediaRequestStatus.PENDING },
+    });
+
+    const userRepository = getRepository(User);
+    const admin = await userRepository.findOne({
+      select: { id: true, plexToken: true },
+      where: { id: 1 },
+    });
+
     try {
       const mediaType = this.type === MediaType.MOVIE ? 'Movie' : 'Series';
       let event: string | undefined;
@@ -1148,6 +1160,8 @@ export class MediaRequest {
             omission: '…',
           }),
           image: `https://image.tmdb.org/t/p/w600_and_h900_bestv2${movie.poster_path}`,
+          pendingRequestsCount: pendingRequests.length,
+          isAdmin: admin ? true : false,
         });
       } else if (this.type === MediaType.TV) {
         const tv = await tmdb.getTvShow({ tvId: media.tmdbId });
@@ -1175,6 +1189,7 @@ export class MediaRequest {
                 .join(', '),
             },
           ],
+          pendingRequestsCount: pendingRequests.length,
         });
       }
     } catch (e) {
